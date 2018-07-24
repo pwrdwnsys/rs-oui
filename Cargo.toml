@@ -1,0 +1,22 @@
+[package]
+name = "oui"
+version = "0.5.0"
+authors = ["pwrdwnsys <pwrdwnsys@users.noreply.github.com>"]
+description = "Lookup MAC OUI vendor information from the Wireshark manufacturer database"
+repository = "https://github.com/pwrdwnsys/rs-oui"
+readme = "README.md"
+keywords = ["mac","oui","eui48","wireshark","network"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+bincode = "1.0"
+byteorder = "1.2"
+eui48 = "0.3"
+failure = "0.1"
+log = "0.4"
+regex = "1.0"
+serde = "1.0"
+serde_derive = "1.0"
+
+[dev-dependencies]
+env_logger = "0.5"
