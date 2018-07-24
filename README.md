@@ -3,7 +3,7 @@ Rust library to lookup MAC/EUI48 OUI vendor name information from the [Wireshark
 
 [![crates.io](http://meritbadge.herokuapp.com/oui)](https://crates.io/crates/oui)
 [![docs.rs](https://docs.rs/oui/badge.svg)](https://docs.rs/oui)
-[![Build Status](https://travis-ci.org/pwrdwnsys/oui.svg?branch=master)](https://travis-ci.org/pwrdwnsys/rs-oui)
+[![Build Status](https://travis-ci.org/pwrdwnsys/rs-oui.svg?branch=master)](https://travis-ci.org/pwrdwnsys/rs-oui)
 
 This library allows you to provide a MAC/EUI48 address and returns information on the vendor registered to the [Organizationally Unique Identifier (OUI)](https://en.wikipedia.org/wiki/Organizationally_unique_identifier) component of the supplied address. For each entry in the Wireshark database, this will be at a minimum the vendor's Wireshark short name, but most entries include the full organization/company name and some also include a descriptive comment.
 
