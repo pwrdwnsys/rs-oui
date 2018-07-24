@@ -13,7 +13,9 @@
 //! vendor's Wireshark short name, but most entries include the full organization/company name
 //! and some also include a descriptive comment.
 //! 
-//! Where IEEE Registration Authority blocks have been sub-divided, the specific manufacturer is returned.
+//! Where IEEE Registration Authority blocks have been sub-divided, the specific manufacturer is returned. Note 
+//! that a vendor/organization may have been allocated multiple blocks by the IEEE - these are each treated 
+//! independently, should a vendor sub-division be later re-allocated or renamed following acquisition.
 //!
 //! Example wget command to download the manufacturer database:
 //! `wget -O manuf.txt 'https://code.wireshark.org/review/gitweb?p=wireshark.git;a=blob_plain;f=manuf'`
@@ -49,12 +51,12 @@ type OuiMap = BTreeMap<(u64, u64), OuiEntry>;
 /// OUI entry
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OuiEntry {
-    /// Wireshark's short name identifier for the vendor
-    name_short: String,
-    /// Vendor full organisation name (usually present)
-    name_long: Option<String>,
-    /// Wireshark comment field
-    comment: Option<String>,
+    /// Wireshark's short name identifier for the organization [REQUIRED]
+    pub name_short: String,
+    /// Organization full name (usually present) [OPTIONAL]
+    pub name_long: Option<String>,
+    /// Wireshark comment field [OPTIONAL]
+    pub comment: Option<String>,
 }
 
 impl Default for OuiEntry {

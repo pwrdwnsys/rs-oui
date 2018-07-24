@@ -7,7 +7,7 @@ Rust library to lookup MAC/EUI48 OUI vendor name information from the [Wireshark
 
 This library allows you to provide a MAC/EUI48 address and returns information on the vendor registered to the [Organizationally Unique Identifier (OUI)](https://en.wikipedia.org/wiki/Organizationally_unique_identifier) component of the supplied address. For each entry in the Wireshark database, this will be at a minimum the vendor's Wireshark short name, but most entries include the full organization/company name and some also include a descriptive comment.
 
-Where IEEE Registration Authority blocks have been sub-divided, the specific manufacturer is returned.
+Where IEEE Registration Authority blocks have been sub-divided, the specific manufacturer is returned. Note that a vendor/organization may have been allocated multiple blocks by the IEEE - these are each treated independently, should a vendor sub-division be later re-allocated or renamed following acquisition.
 
 Example wget command to download the manufacturer database:
 `wget -O manuf.txt 'https://code.wireshark.org/review/gitweb?p=wireshark.git;a=blob_plain;f=manuf'`
@@ -16,7 +16,7 @@ oui is available on [crates.io](https://crates.io/crates/oui) and can be include
 
 ```toml
 [dependencies]
-oui = "0.5.0"
+oui = "0.5.1"
 ```
 
 ## Documentation
