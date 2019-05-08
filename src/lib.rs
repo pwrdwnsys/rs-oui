@@ -1,4 +1,4 @@
-// Copyright 2018 pwrdwnsys.
+// Copyright 2018,2019 pwrdwnsys.
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -24,17 +24,12 @@
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
 
-extern crate bincode;
-extern crate byteorder;
-extern crate eui48;
 #[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate log;
-extern crate regex;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
 
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -206,7 +201,7 @@ fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
                 ));
             }
 
-            let mut mask: u8;
+            let mask: u8;
 
             let oui_and_mask: Vec<_> = fields_cleaned[0].split('/').collect();
             match oui_and_mask.len() {
@@ -238,7 +233,7 @@ fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
 
             // If it's a 24-bit mask (undecorated default), shift over as non-24
             // pads are fully written out in the file.
-            let mut oui_start: u64;
+            let oui_start: u64;
             if mask == 24 {
                 oui_start = oui_int << 24;
             } else {
@@ -265,7 +260,7 @@ fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
             }
 
             // second field is the "short name"
-            let mut name_short: String = fields_cleaned[1].to_owned();
+            let name_short: String = fields_cleaned[1].to_owned();
 
             let entry_data = OuiEntry {
                 name_short,

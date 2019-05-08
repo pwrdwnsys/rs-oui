@@ -7,6 +7,7 @@ repository = "https://github.com/pwrdwnsys/rs-oui"
 readme = "README.md"
 keywords = ["mac","oui","eui48","wireshark","network"]
 license = "MIT OR Apache-2.0"
+edition = "2018"
 
 [dependencies]
 bincode = "1.1"
