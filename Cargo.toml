@@ -1,6 +1,6 @@
 [package]
 name = "oui"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["pwrdwnsys <pwrdwnsys@users.noreply.github.com>"]
 description = "Lookup MAC OUI vendor information from the Wireshark manufacturer database"
 repository = "https://github.com/pwrdwnsys/rs-oui"
