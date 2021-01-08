@@ -1,4 +1,4 @@
-// Copyright 2018-2020 pwrdwnsys.
+// Copyright 2018-2021 pwrdwnsys.
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -244,7 +244,7 @@ fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
             let oui_end: u64 = oui_start | 0xFFFF_FFFF_FFFF >> mask;
 
             // 4 fields, so has a "comment"
-            let mut comment: Option<String>;
+            let comment: Option<String>;
             if fields_cleaned.len() == 4 {
                 comment = Some(fields_cleaned[3].to_owned())
             } else {
@@ -252,7 +252,7 @@ fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
             }
 
             // 3 fields, so has a "long name"
-            let mut name_long: Option<String>;
+            let name_long: Option<String>;
             if fields_cleaned.len() >= 3 {
                 name_long = Some(fields_cleaned[2].to_owned())
             } else {

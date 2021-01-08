@@ -16,7 +16,7 @@ oui is available on [crates.io](https://crates.io/crates/oui) and can be include
 
 ```toml
 [dependencies]
-oui = "0.7"
+oui = "0.8"
 ```
 
 For example, querying the database for the MAC address `00:00:18:00:20:01` returns the following information:
