@@ -35,6 +35,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 
 use byteorder::{NetworkEndian, ReadBytesExt};
 use eui48::MacAddress;
@@ -71,9 +72,16 @@ pub struct OuiDatabase {
 
 impl OuiDatabase {
     /// Create a new database from a Wireshark database file
-    pub fn new_from_file(dbfile: &str) -> Result<OuiDatabase, Error> {
-        let db = create_oui_db_from_file(dbfile)?;
-        info!("Created a new OUI Vendor database from file {}", dbfile);
+    pub fn new_from_file<P: AsRef<Path>>(dbfile: P) -> Result<OuiDatabase, Error> {
+        let db = create_oui_db_from_file(dbfile.as_ref())?;
+        info!("Created a new OUI Vendor database from file {:?}", dbfile.as_ref());
+        Ok(OuiDatabase { database: db })
+    }
+
+    /// Create a new database from a Wireshark database string
+    pub fn new_from_str(dbstr: &str) -> Result<OuiDatabase, Error> {
+        let db = create_oui_db_from_str(dbstr)?;
+        info!("Created a new OUI Vendor database from string");
         Ok(OuiDatabase { database: db })
     }
 
@@ -173,110 +181,127 @@ fn mac_to_u64(mac: &MacAddress) -> Result<u64, Error> {
 }
 
 /// Opens and parses a Wireshark data file into a `OuiMap`
-fn create_oui_db_from_file(dbfile: &str) -> Result<OuiMap, Error> {
-    let file = File::open(dbfile).context(format!("could not open database file: {}", dbfile))?;
+fn create_oui_db_from_file<P: AsRef<Path>>(dbfile: P) -> Result<OuiMap, Error> {
+    let file = File::open(dbfile.as_ref()).context(format!("could not open database file: {:?}", dbfile.as_ref()))?;
     let re = Regex::new("[\t]+").context("could not compile regex")?;
 
     let mut vendor_data = OuiMap::new();
 
     for line in BufReader::new(file).lines() {
-        let entry = line.context("could not get data line")?;
-        // Only process lines with data
-        if !(entry.starts_with('#') || entry.is_empty()) {
-            let data = re.replace_all(&entry, "|");
-            let fields_raw: Vec<&str> = data.split('|').collect();
-            let fields_cleaned: Vec<_> = fields_raw
-                .into_iter()
-                .map(|field| {
-                    // Clean up (for comment field)
-                    let f = field.replace('#', "");
-                    f.trim().to_owned()
-                })
-                .collect();
-
-            if !(fields_cleaned.len() >= 2 && fields_cleaned.len() <= 4) {
-                return Err(format_err!(
-                    "unexpected number of fields extracted: {:?}",
-                    fields_cleaned
-                ));
-            }
-
-            let mask: u8;
-
-            let oui_and_mask: Vec<_> = fields_cleaned[0].split('/').collect();
-            match oui_and_mask.len() {
-                1 => mask = 24,
-                2 => {
-                    mask = u8::from_str_radix(&oui_and_mask[1], 10)
-                        .context(format!("could not parse mask: {}", &oui_and_mask[1]))?;
-                    if !(mask >= 8 && mask <= 48) {
-                        return Err(format_err!("incorrect mask value: {}", mask));
-                    }
-                }
-                _ => {
-                    return Err(format_err!(
-                        "invalid number of mask separators: {:?}",
-                        oui_and_mask
-                    ))
-                }
-            };
-
-            // Get the whole MAC string
-            let oui = oui_and_mask[0]
-                .to_owned()
-                .to_uppercase()
-                .replace(":", "")
-                .replace("-", "")
-                .replace(".", "");
-            let oui_int = u64::from_str_radix(&oui, 16)
-                .context(format!("could not parse stripped OUI: {}", oui))?;
-
-            // If it's a 24-bit mask (undecorated default), shift over as non-24
-            // pads are fully written out in the file.
-            let oui_start: u64;
-            if mask == 24 {
-                oui_start = oui_int << 24;
-            } else {
-                oui_start = oui_int
-            };
-
-            // Find the end of this OUI entry range
-            let oui_end: u64 = oui_start | 0xFFFF_FFFF_FFFF >> mask;
-
-            // 4 fields, so has a "comment"
-            let comment: Option<String>;
-            if fields_cleaned.len() == 4 {
-                comment = Some(fields_cleaned[3].to_owned())
-            } else {
-                comment = None
-            }
-
-            // 3 fields, so has a "long name"
-            let name_long: Option<String>;
-            if fields_cleaned.len() >= 3 {
-                name_long = Some(fields_cleaned[2].to_owned())
-            } else {
-                name_long = None
-            }
-
-            // second field is the "short name"
-            let name_short: String = fields_cleaned[1].to_owned();
-
-            let entry_data = OuiEntry {
-                name_short,
-                name_long,
-                comment,
-            };
-
-            trace!(
-                "Inserting entry for vendor: Range {}-{} is {:?}",
-                oui_start,
-                oui_end,
-                entry_data
-            );
-            vendor_data.insert((oui_start, oui_end), entry_data);
-        };
+        parse_entry(&line.context("could not get data line")?, &re, &mut vendor_data)?
     }
 
     Ok(vendor_data)
+}
+
+fn create_oui_db_from_str(dbstring: &str) -> Result<OuiMap, Error> {
+    let re = Regex::new("[\t]+").context("could not compile regex")?;
+
+    let mut vendor_data = OuiMap::new();
+
+    for entry in dbstring.lines() {
+        parse_entry(entry, &re, &mut vendor_data)?
+    }
+
+    Ok(vendor_data)
+}
+
+#[inline(always)]
+fn parse_entry(entry: &str, re: &Regex, vendor_data: &mut OuiMap) -> Result<(), Error> {
+    // Only process lines with data
+    if !(entry.starts_with('#') || entry.is_empty()) {
+        let data = re.replace_all(&entry, "|");
+        let fields_raw: Vec<&str> = data.split('|').collect();
+        let fields_cleaned: Vec<_> = fields_raw
+            .into_iter()
+            .map(|field| {
+                // Clean up (for comment field)
+                let f = field.replace('#', "");
+                f.trim().to_owned()
+            })
+            .collect();
+
+        if !(fields_cleaned.len() >= 2 && fields_cleaned.len() <= 4) {
+            return Err(format_err!(
+                "unexpected number of fields extracted: {:?}",
+                fields_cleaned
+            ));
+        }
+
+        let mask: u8;
+
+        let oui_and_mask: Vec<_> = fields_cleaned[0].split('/').collect();
+        match oui_and_mask.len() {
+            1 => mask = 24,
+            2 => {
+                mask = u8::from_str_radix(&oui_and_mask[1], 10)
+                    .context(format!("could not parse mask: {}", &oui_and_mask[1]))?;
+                if !(mask >= 8 && mask <= 48) {
+                    return Err(format_err!("incorrect mask value: {}", mask));
+                }
+            }
+            _ => {
+                return Err(format_err!(
+                    "invalid number of mask separators: {:?}",
+                    oui_and_mask
+                ))
+            }
+        };
+
+        // Get the whole MAC string
+        let oui = oui_and_mask[0]
+            .to_owned()
+            .to_uppercase()
+            .replace(":", "")
+            .replace("-", "")
+            .replace(".", "");
+        let oui_int = u64::from_str_radix(&oui, 16)
+            .context(format!("could not parse stripped OUI: {}", oui))?;
+
+        // If it's a 24-bit mask (undecorated default), shift over as non-24
+        // pads are fully written out in the file.
+        let oui_start: u64;
+        if mask == 24 {
+            oui_start = oui_int << 24;
+        } else {
+            oui_start = oui_int
+        };
+
+        // Find the end of this OUI entry range
+        let oui_end: u64 = oui_start | 0xFFFF_FFFF_FFFF >> mask;
+
+        // 4 fields, so has a "comment"
+        let comment: Option<String>;
+        if fields_cleaned.len() == 4 {
+            comment = Some(fields_cleaned[3].to_owned())
+        } else {
+            comment = None
+        }
+
+        // 3 fields, so has a "long name"
+        let name_long: Option<String>;
+        if fields_cleaned.len() >= 3 {
+            name_long = Some(fields_cleaned[2].to_owned())
+        } else {
+            name_long = None
+        }
+
+        // second field is the "short name"
+        let name_short: String = fields_cleaned[1].to_owned();
+
+        let entry_data = OuiEntry {
+            name_short,
+            name_long,
+            comment,
+        };
+
+        trace!(
+            "Inserting entry for vendor: Range {}-{} is {:?}",
+            oui_start,
+            oui_end,
+            entry_data
+        );
+        vendor_data.insert((oui_start, oui_end), entry_data);
+    };
+    Ok(())
 }
