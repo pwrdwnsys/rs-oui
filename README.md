@@ -1,4 +1,7 @@
 # oui
+
+**2024-08-14: NOTICE - This project has been archived and no further updates will be made.** 
+
 Rust library to lookup MAC/EUI48 OUI vendor name information from the [Wireshark manufacturer database](https://code.wireshark.org/review/gitweb?p=wireshark.git;a=blob_plain;f=manuf).
 
 [![crates.io](http://meritbadge.herokuapp.com/oui)](https://crates.io/crates/oui)
